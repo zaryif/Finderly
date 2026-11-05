@@ -9,6 +9,7 @@ import 'package:finderly/widgets/folder_icon.dart';
 import 'package:finderly/widgets/color_picker_dialog.dart';
 import 'package:finderly/screens/folder_screen.dart';
 import 'package:finderly/screens/search_screen.dart';
+import 'package:finderly/widgets/sync_sheet.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -40,34 +41,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
             actions: [
-              // Multi-device sync indicator & trigger
+              // Multi-device sync indicator & Sync Center trigger
               ListenableBuilder(
                 listenable: SyncService.instance,
                 builder: (context, _) {
                   final sync = SyncService.instance;
                   final isSyncing = sync.status == SyncStatus.syncing;
-                  return IconButton(
-                    icon: isSyncing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.cloud_done_outlined),
-                    tooltip: sync.syncMessage ?? 'Sync across devices',
-                    onPressed: isSyncing
-                        ? null
-                        : () async {
-                            await SyncService.instance.syncAll();
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('All files & folders synced across devices'),
-                                  duration: Duration(seconds: 2),
-                                ),
-                              );
-                            }
-                          },
+                  final peerCount = sync.discoveredPeers.length;
+
+                  return Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      IconButton(
+                        icon: isSyncing
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : Icon(
+                                peerCount > 0
+                                    ? Icons.sync_rounded
+                                    : Icons.cloud_outlined,
+                                color: peerCount > 0
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                        tooltip: 'Finderly Sync Center (${sync.localIp ?? 'Active'})',
+                        onPressed: () => SyncSheet.show(context),
+                      ),
+                      if (peerCount > 0 && !isSyncing)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: const BoxDecoration(
+                              color: Colors.green,
+                              shape: BoxShape.circle,
+                            ),
+                            constraints: const BoxConstraints(
+                              minWidth: 10,
+                              minHeight: 10,
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),

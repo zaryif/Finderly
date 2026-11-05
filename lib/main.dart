@@ -7,6 +7,7 @@ import 'package:finderly/providers/folder_provider.dart';
 import 'package:finderly/providers/file_provider.dart';
 import 'package:finderly/providers/search_provider.dart';
 import 'package:finderly/database/local_db.dart';
+import 'package:finderly/services/sync_service.dart';
 import 'package:finderly/app.dart';
 
 void main() async {
@@ -19,6 +20,11 @@ void main() async {
   }
 
   await LocalDB.instance.database;
+
+  // Initialize background real-time sync service & peer discovery
+  SyncService.instance.initialize().catchError((e) {
+    debugPrint('Sync initialization warning: $e');
+  });
 
   runApp(
     MultiProvider(
