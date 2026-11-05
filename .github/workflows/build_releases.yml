@@ -31,6 +31,17 @@ jobs:
           channel: 'stable'
           cache: true
 
+      - name: Configure Android platform runner
+        run: |
+          flutter create . --platforms=android --org=com.example
+          # Ensure minSdk is 36 as requested
+          if [ -f "android/app/build.gradle.kts" ]; then
+            sed -i 's/minSdk.*/minSdk = 36/g' android/app/build.gradle.kts
+          fi
+          if [ -f "android/app/build.gradle" ]; then
+            sed -i 's/minSdkVersion.*/minSdkVersion 36/g' android/app/build.gradle
+          fi
+
       - name: Install dependencies
         run: flutter pub get
 
@@ -62,8 +73,10 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Enable macOS Desktop
-        run: flutter config --enable-macos-desktop
+      - name: Enable macOS Desktop & Configure Runner
+        run: |
+          flutter config --enable-macos-desktop
+          flutter create . --platforms=macos --org=com.example
 
       - name: Install dependencies
         run: flutter pub get
@@ -97,8 +110,10 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Enable Windows Desktop
-        run: flutter config --enable-windows-desktop
+      - name: Enable Windows Desktop & Configure Runner
+        run: |
+          flutter config --enable-windows-desktop
+          flutter create . --platforms=windows --org=com.example
 
       - name: Install dependencies
         run: flutter pub get
@@ -132,6 +147,10 @@ jobs:
         with:
           channel: 'stable'
           cache: true
+
+      - name: Configure iOS Runner
+        run: |
+          flutter create . --platforms=ios --org=com.example
 
       - name: Install dependencies
         run: flutter pub get
