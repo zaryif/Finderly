@@ -87,10 +87,20 @@ class SyncService extends ChangeNotifier {
   // ==========================================
 
   Future<void> initialize() async {
-    _deviceName = await _loadDeviceName();
-    await _detectLocalIp();
-    await startServer();
-    await startDiscovery();
+    try {
+      _deviceName = await _loadDeviceName();
+    } catch (_) {
+      _deviceName = 'Finderly Device';
+    }
+    try {
+      await _detectLocalIp();
+    } catch (_) {}
+    try {
+      await startServer();
+    } catch (_) {}
+    try {
+      await startDiscovery();
+    } catch (_) {}
   }
 
   Future<String> _loadDeviceName() async {

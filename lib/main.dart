@@ -19,12 +19,20 @@ void main() async {
     databaseFactory = databaseFactoryFfi;
   }
 
-  await LocalDB.instance.database;
+  try {
+    await LocalDB.instance.database;
+  } catch (e) {
+    debugPrint('Database init warning: $e');
+  }
 
   // Initialize background real-time sync service & peer discovery
-  SyncService.instance.initialize().catchError((e) {
-    debugPrint('Sync initialization warning: $e');
-  });
+  try {
+    SyncService.instance.initialize().catchError((e) {
+      debugPrint('Sync initialization warning: $e');
+    });
+  } catch (e) {
+    debugPrint('Sync service startup warning: $e');
+  }
 
   runApp(
     MultiProvider(
