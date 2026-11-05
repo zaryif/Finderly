@@ -42,8 +42,8 @@ android {
 
     defaultConfig {
         applicationId "com.example.finderly"
-        minSdk 36
-        targetSdk 36
+        minSdk 26
+        targetSdk 34
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
     }

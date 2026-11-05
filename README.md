@@ -9,7 +9,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.29%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Dart](https://img.shields.io/badge/Dart-3.6%2B-0175C2?logo=dart&logoColor=white)](https://dart.dev)
-[![Android](https://img.shields.io/badge/Android-API%2036-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
+[![Android](https://img.shields.io/badge/Android-8.0%2B%20(API%2026)-3DDC84?logo=android&logoColor=white)](https://developer.android.com)
 [![macOS](https://img.shields.io/badge/macOS-Big%20Sur%2B-000000?logo=apple&logoColor=white)](https://apple.com/macos)
 [![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D6?logo=windows&logoColor=white)](https://microsoft.com/windows)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -36,7 +36,7 @@ Organize any file type (PDFs, images, documents, videos, archives, spreadsheets)
 - 🔄 **Multi-Device Cloud Sync**: Sync engine tracking changes across devices with one-tap sync and status alerts.
 - 🔍 **Instant Global Search**: Debounced search across both folder names and file names.
 - ✏️ **Full Management Controls**: Rename files & folders (on disk and database), change folder colors anytime, share via native OS share sheets.
-- 🤖 **Android 16 Ready**: Configured with `minSdk = 36` (Android 16 Baklava) and high-density adaptive launcher icons.
+- 🤖 **Android 8.0+ Ready**: Configured with `minSdk = 26` (Android 8.0 Oreo and above) with adaptive launcher icons.
 
 ---
 
@@ -61,7 +61,7 @@ Automated builds are compiled by GitHub Actions CI/CD for all target platforms:
 
 | Platform | Download Asset | Target Spec |
 |:---|:---|:---|
-| 🤖 **Android** | [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-android.apk) | Min API 36 (Android 16), ARM64 & x86_64 |
+| 🤖 **Android** | [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-android.apk) | Min API 26 (Android 8.0+), ARM64 & x86_64 |
 | 🍏 **macOS** | [`finderly-macos.dmg`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-macos.dmg) | macOS 11+ Universal (Apple Silicon & Intel) |
 | 🪟 **Windows** | [`finderly-windows.exe`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-windows.exe) | Windows 10 / 11 64-bit installer |
 | 🍎 **iOS** | [`finderly-ios.ipa`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-ios.ipa) | Sideloadable via AltStore / TrollStore / TestFlight |
@@ -158,3 +158,4 @@ For full engineering specifications, review the design documents:
 ## 📜 License
 
 Distributed under the MIT License. See `LICENSE` for details.
+

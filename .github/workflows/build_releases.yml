@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   # -------------------------------------------------------------
-  # 1. Android APK Build (API 36 / Android 16)
+  # 1. Android APK Build (API 26 / Android 8.0+)
   # -------------------------------------------------------------
   build-android:
     name: Build Android APK
@@ -34,12 +34,12 @@ jobs:
       - name: Configure Android platform runner
         run: |
           flutter create . --platforms=android --org=com.example
-          # Ensure minSdk is 36 as requested
+          # Ensure minSdk is 26 (Android 8.0+)
           if [ -f "android/app/build.gradle.kts" ]; then
-            sed -i 's/minSdk.*/minSdk = 36/g' android/app/build.gradle.kts
+            sed -i 's/minSdk.*/minSdk = 26/g' android/app/build.gradle.kts
           fi
           if [ -f "android/app/build.gradle" ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 36/g' android/app/build.gradle
+            sed -i 's/minSdkVersion.*/minSdkVersion 26/g' android/app/build.gradle
           fi
 
       - name: Install dependencies
@@ -218,7 +218,7 @@ jobs:
 
             Download the ready-to-use binaries for your platform:
 
-            - 🤖 **Android**: [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-android.apk) *(Android 16 / API 36+ supported)*
+            - 🤖 **Android**: [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-android.apk) *(Android 8.0+ / API 26+ supported)*
             - 🍏 **macOS**: [`finderly-macos.dmg`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-macos.dmg) *(macOS 11+ Universal)*
             - 🪟 **Windows**: [`finderly-windows.zip`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-windows.zip) *(Windows 10/11 x64)*
             - 🍎 **iOS**: [`finderly-ios.ipa`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-ios.ipa) *(AltStore / Sideloading)*
