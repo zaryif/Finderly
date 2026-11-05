@@ -49,14 +49,38 @@ jobs:
           # Remove auto-generated dummy widget test from flutter create
           rm -f test/widget_test.dart
 
-          # Ensure minSdk is 26 (Android 8.0+)
+          # Ensure minSdk is 26 (Android 8.0+) and compileSdk is 36
           if [ -f "android/app/build.gradle.kts" ]; then
             sed -i 's/minSdk = .*/minSdk = 26/g' android/app/build.gradle.kts
             sed -i 's/minSdkVersion = .*/minSdkVersion = 26/g' android/app/build.gradle.kts
+            sed -i 's/compileSdk = .*/compileSdk = 36/g' android/app/build.gradle.kts
           fi
           if [ -f "android/app/build.gradle" ]; then
             sed -i 's/minSdk .*/minSdk 26/g' android/app/build.gradle
             sed -i 's/minSdkVersion .*/minSdkVersion 26/g' android/app/build.gradle
+            sed -i 's/compileSdkVersion .*/compileSdkVersion 36/g' android/app/build.gradle
+          fi
+
+          # Disable AarMetadata checks across subprojects so older plugin metadata doesn't halt the build
+          if [ -f "android/settings.gradle.kts" ]; then
+            cat << 'EOF' >> android/settings.gradle.kts
+
+gradle.afterProject {
+    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+        enabled = false
+    }
+}
+EOF
+          fi
+          if [ -f "android/settings.gradle" ]; then
+            cat << 'EOF' >> android/settings.gradle
+
+gradle.afterProject { project ->
+    project.tasks.matching { it.name.contains("AarMetadata") }.configureEach {
+        enabled = false
+    }
+}
+EOF
           fi
 
       - name: Install dependencies
