@@ -34,3 +34,12 @@ Thumbs.db
 **/macos/**/.symlinks/
 **/macos/**/Flutter/ephemeral/
 
+
+# Release distribution & artifacts
+dist/
+release_assets/
+*.apk
+*.dmg
+*.ipa
+*.zip
+.metadata
