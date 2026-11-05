@@ -33,7 +33,9 @@ Organize any file type (PDFs, images, documents, videos, archives, spreadsheets)
 - 📄 **Universal File Storage**: Store and organize any file format (PDF, DOCX, XLSX, PPTX, MP4, MP3, ZIP, TXT, images).
 - 🏷️ **Native macOS Document Badges**: Color-coded folded sheet icons for PDFs, Word, Excel, PowerPoint, ZIP, and media.
 - ⚡ **Offline-First & Download Button**: Tap the download icon to keep files permanently offline with clear visual badges (`check_circle` ↔ `cloud_download`).
-- 🔄 **Multi-Device Cloud Sync**: Sync engine tracking changes across devices with one-tap sync and status alerts.
+- 🔄 **Real-Time Cross-Device Sync (P2P Wi-Fi & LAN)**: Built-in local HTTP sync server and UDP beacon discovery for instant two-way sync across phones, laptops, and PCs on the same Wi-Fi with zero configuration and zero cloud delay.
+- 📦 **Vault Backup & Migration (.finderly)**: 1-click export and import of your entire vault (all folders, metadata, and physical file bytes) into a single portable `.finderly` archive for offline transfers via AirDrop, Bluetooth, Drive, or USB.
+- ☁️ **WebDAV / Nextcloud Support**: Optional remote internet synchronization with self-hosted Nextcloud, ownCloud, or any WebDAV provider.
 - 🔍 **Instant Global Search**: Debounced search across both folder names and file names.
 - ✏️ **Full Management Controls**: Rename files & folders (on disk and database), change folder colors anytime, share via native OS share sheets.
 - 🤖 **Android 8.0+ Ready**: Configured with `minSdk = 26` (Android 8.0 Oreo and above) with adaptive launcher icons.
@@ -63,7 +65,7 @@ Automated builds are compiled by GitHub Actions CI/CD for all target platforms:
 |:---|:---|:---|
 | 🤖 **Android** | [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-android.apk) | Min API 26 (Android 8.0+), ARM64 & x86_64 |
 | 🍏 **macOS** | [`finderly-macos.dmg`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-macos.dmg) | macOS 11+ Universal (Apple Silicon & Intel) |
-| 🪟 **Windows** | [`finderly-windows.exe`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-windows.exe) | Windows 10 / 11 64-bit installer |
+| 🪟 **Windows** | [`finderly-windows.zip`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-windows.zip) | Windows 10 / 11 64-bit standalone package |
 | 🍎 **iOS** | [`finderly-ios.ipa`](https://github.com/zaryif/Finderly/releases/latest/download/finderly-ios.ipa) | Sideloadable via AltStore / TrollStore / TestFlight |
 
 ---
