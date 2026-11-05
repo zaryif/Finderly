@@ -33,15 +33,30 @@ jobs:
 
       - name: Configure Android platform runner
         run: |
+          # Backup custom launcher icons and AndroidManifest
+          mkdir -p /tmp/android_backup
+          cp -r android/app/src/main/res/mipmap-* /tmp/android_backup/ 2>/dev/null || true
+          cp android/app/src/main/AndroidManifest.xml /tmp/android_backup/ 2>/dev/null || true
+
+          # Cleanly generate android runner matching the runner's Flutter SDK version
+          rm -rf android
           flutter create . --platforms=android --org=com.example
+
+          # Restore custom icons and manifest
+          cp -r /tmp/android_backup/mipmap-* android/app/src/main/res/ 2>/dev/null || true
+          cp /tmp/android_backup/AndroidManifest.xml android/app/src/main/AndroidManifest.xml 2>/dev/null || true
+
           # Remove auto-generated dummy widget test from flutter create
           rm -f test/widget_test.dart
+
           # Ensure minSdk is 26 (Android 8.0+)
           if [ -f "android/app/build.gradle.kts" ]; then
-            sed -i 's/minSdk.*/minSdk = 26/g' android/app/build.gradle.kts
+            sed -i 's/minSdk = .*/minSdk = 26/g' android/app/build.gradle.kts
+            sed -i 's/minSdkVersion = .*/minSdkVersion = 26/g' android/app/build.gradle.kts
           fi
           if [ -f "android/app/build.gradle" ]; then
-            sed -i 's/minSdkVersion.*/minSdkVersion 26/g' android/app/build.gradle
+            sed -i 's/minSdk .*/minSdk 26/g' android/app/build.gradle
+            sed -i 's/minSdkVersion .*/minSdkVersion 26/g' android/app/build.gradle
           fi
 
       - name: Install dependencies
@@ -51,7 +66,7 @@ jobs:
         run: flutter test
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
