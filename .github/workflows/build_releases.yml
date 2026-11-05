@@ -1,0 +1,208 @@
+name: Build & Release Finderly Multiplatform
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # -------------------------------------------------------------
+  # 1. Android APK Build (API 36 / Android 16)
+  # -------------------------------------------------------------
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Run unit tests
+        run: flutter test
+
+      - name: Build Android APK
+        run: flutter build apk --release
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: finderly-android-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+  # -------------------------------------------------------------
+  # 2. macOS Desktop Build (.dmg disk image)
+  # -------------------------------------------------------------
+  build-macos:
+    name: Build macOS DMG
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable macOS Desktop
+        run: flutter config --enable-macos-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build macOS App
+        run: flutter build macos --release
+
+      - name: Package macOS DMG
+        run: |
+          hdiutil create -volname "Finderly" -srcfolder "build/macos/Build/Products/Release/finderly.app" -ov -format UDZO "$GITHUB_WORKSPACE/finderly-macos.dmg"
+
+      - name: Upload macOS DMG
+        uses: actions/upload-artifact@v4
+        with:
+          name: finderly-macos-dmg
+          path: finderly-macos.dmg
+
+  # -------------------------------------------------------------
+  # 3. Windows Desktop Build (.exe bundle)
+  # -------------------------------------------------------------
+  build-windows:
+    name: Build Windows Desktop
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Enable Windows Desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build Windows Executable
+        run: flutter build windows --release
+
+      - name: Package Windows ZIP
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build\windows\x64\runner\Release\*" -DestinationPath "finderly-windows.zip"
+
+      - name: Upload Windows Bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: finderly-windows-app
+          path: finderly-windows.zip
+
+  # -------------------------------------------------------------
+  # 4. iOS IPA Package (Payload/Runner.app)
+  # -------------------------------------------------------------
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build iOS
+        run: flutter build ios --release --no-codesign
+
+      - name: Package iOS IPA
+        run: |
+          mkdir -p Payload
+          cp -r build/ios/iphoneos/Runner.app Payload/
+          zip -r -q "$GITHUB_WORKSPACE/finderly-ios.ipa" Payload
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: finderly-ios-ipa
+          path: finderly-ios.ipa
+
+  # -------------------------------------------------------------
+  # 5. Automated GitHub Release with all 4 Multiplatform Downloads
+  # -------------------------------------------------------------
+  create-release:
+    name: Publish Multiplatform Release
+    needs: [build-android, build-macos, build-windows, build-ios]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Android APK
+        uses: actions/download-artifact@v4
+        with:
+          name: finderly-android-apk
+          path: release_assets/
+
+      - name: Download macOS DMG
+        uses: actions/download-artifact@v4
+        with:
+          name: finderly-macos-dmg
+          path: release_assets/
+
+      - name: Download Windows Bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: finderly-windows-app
+          path: release_assets/
+
+      - name: Download iOS IPA
+        uses: actions/download-artifact@v4
+        with:
+          name: finderly-ios-ipa
+          path: release_assets/
+
+      - name: Organize Release Binaries
+        run: |
+          cd release_assets
+          mv app-release.apk finderly-android.apk 2>/dev/null || true
+          ls -la
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.0
+          name: Finderly v1.0.0 — Multiplatform Release
+          body: |
+            ## 🚀 Finderly v1.0.0 Official Release
+
+            Download the ready-to-use binaries for your platform:
+
+            - 🤖 **Android**: [`finderly-android.apk`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-android.apk) *(Android 16 / API 36+ supported)*
+            - 🍏 **macOS**: [`finderly-macos.dmg`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-macos.dmg) *(macOS 11+ Universal)*
+            - 🪟 **Windows**: [`finderly-windows.zip`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-windows.zip) *(Windows 10/11 x64)*
+            - 🍎 **iOS**: [`finderly-ios.ipa`](https://github.com/zaryif/Finderly/releases/download/v1.0.0/finderly-ios.ipa) *(AltStore / Sideloading)*
+          files: release_assets/*
+          draft: false
+          prerelease: false
