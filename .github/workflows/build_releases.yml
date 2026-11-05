@@ -63,24 +63,10 @@ jobs:
 
           # Disable AarMetadata checks across subprojects so older plugin metadata doesn't halt the build
           if [ -f "android/settings.gradle.kts" ]; then
-            cat << 'EOF' >> android/settings.gradle.kts
-
-gradle.afterProject {
-    tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-        enabled = false
-    }
-}
-EOF
+            printf '\ngradle.afterProject {\n    tasks.matching { it.name.contains("AarMetadata") }.configureEach {\n        enabled = false\n    }\n}\n' >> android/settings.gradle.kts
           fi
           if [ -f "android/settings.gradle" ]; then
-            cat << 'EOF' >> android/settings.gradle
-
-gradle.afterProject { project ->
-    project.tasks.matching { it.name.contains("AarMetadata") }.configureEach {
-        enabled = false
-    }
-}
-EOF
+            printf '\ngradle.afterProject { project ->\n    project.tasks.matching { it.name.contains("AarMetadata") }.configureEach {\n        enabled = false\n    }\n}\n' >> android/settings.gradle
           fi
 
       - name: Install dependencies
