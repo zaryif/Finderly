@@ -7,6 +7,7 @@ class FolderCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onRename;
   final VoidCallback? onChangeColor;
+  final VoidCallback? onMerge;
   final VoidCallback? onDelete;
 
   const FolderCard({
@@ -15,6 +16,7 @@ class FolderCard extends StatelessWidget {
     required this.onTap,
     this.onRename,
     this.onChangeColor,
+    this.onMerge,
     this.onDelete,
   });
 
@@ -68,6 +70,15 @@ class FolderCard extends StatelessWidget {
                 onTap: () {
                   Navigator.pop(context);
                   onChangeColor!();
+                },
+              ),
+            if (onMerge != null)
+              ListTile(
+                leading: const Icon(Icons.merge_type),
+                title: const Text('Merge into Folder...'),
+                onTap: () {
+                  Navigator.pop(context);
+                  onMerge!();
                 },
               ),
             if (onDelete != null)

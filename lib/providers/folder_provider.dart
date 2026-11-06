@@ -89,6 +89,20 @@ class FolderProvider extends ChangeNotifier {
     await loadFolders(parentId);
   }
 
+  Future<List<FolderModel>> getMergeCandidates(String sourceFolderId) async {
+    return _db.getMergeCandidates(sourceFolderId);
+  }
+
+  Future<void> mergeFolders(
+    String sourceFolderId,
+    String targetFolderId, {
+    String? refreshParentId,
+  }) async {
+    await _db.mergeFolders(sourceFolderId, targetFolderId);
+    SyncService.instance.markPending();
+    await loadFolders(refreshParentId);
+  }
+
   void navigateToFolder(FolderModel folder) {
     if (_currentFolder != null) {
       _parentStack.addLast(_currentFolder!);

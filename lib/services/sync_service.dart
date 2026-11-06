@@ -9,6 +9,7 @@ import 'package:finderly/database/local_db.dart';
 import 'package:finderly/models/folder_model.dart';
 import 'package:finderly/models/file_item_model.dart';
 import 'package:finderly/services/file_service.dart';
+import 'package:finderly/services/google_drive_service.dart';
 
 enum SyncStatus { idle, syncing, synced, serverRunning, offline, error }
 
@@ -204,6 +205,31 @@ class SyncService extends ChangeNotifier {
 
     final path = request.uri.path;
     try {
+      if (path == '/oauth2callback') {
+        final code = request.uri.queryParameters['code'];
+        if (code != null && code.isNotEmpty) {
+          GoogleDriveService.instance.handleAuthCode(code).catchError((e) {
+            debugPrint('[SyncService] Google OAuth handling error: $e');
+          });
+          request.response.headers.contentType = ContentType.html;
+          request.response.write('''
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="utf-8"><title>Finderly Google Sync</title></head>
+            <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; text-align: center; padding: 60px 20px; background: #F5F5F7;">
+              <div style="background: white; border-radius: 16px; max-width: 400px; margin: 0 auto; padding: 40px; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                <div style="font-size: 48px; margin-bottom: 12px;">✅</div>
+                <h2 style="margin: 0 0 10px 0; color: #1D1D1F;">Google Account Connected!</h2>
+                <p style="color: #6E6E73; font-size: 14px; margin-bottom: 24px;">Finderly is now connected to your Google Drive. You can close this tab and return to the app.</p>
+              </div>
+            </body>
+            </html>
+          ''');
+          await request.response.close();
+          return;
+        }
+      }
+
       if (path == '/api/v1/info' && request.method == 'GET') {
         final stats = await LocalDB.instance.getDatabaseStats();
         final body = {

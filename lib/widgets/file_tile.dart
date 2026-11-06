@@ -43,12 +43,12 @@ class FileTile extends StatelessWidget {
         ],
       ),
       child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
         leading: _buildFileIcon(ext),
         title: Text(
           file.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+          softWrap: true,
+          style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
         ),
         subtitle: Text(
           '${file.formattedSize} • ${_formatDate(file.createdAt)}',
@@ -61,26 +61,38 @@ class FileTile extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             IconButton(
-              icon: const Icon(Icons.share_outlined, size: 20),
+              icon: const Icon(Icons.share_outlined, size: 18),
               tooltip: 'Share file',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              visualDensity: VisualDensity.compact,
               onPressed: () {
                 Share.shareXFiles([XFile(file.localPath)], text: file.name);
               },
             ),
+            const SizedBox(width: 4),
             IconButton(
               icon: Icon(
                 file.isDownloaded
                     ? Icons.check_circle
                     : Icons.cloud_download_outlined,
                 color: file.isDownloaded ? Colors.green : null,
+                size: 18,
               ),
               tooltip: file.isDownloaded
                   ? 'Available Offline (Tap to remove)'
                   : 'Download for Offline',
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              visualDensity: VisualDensity.compact,
               onPressed: onDownloadToggle,
             ),
+            const SizedBox(width: 2),
             PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 20),
+              icon: const Icon(Icons.more_vert, size: 18),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+              tooltip: 'More options',
               onSelected: (val) {
                 if (val == 'rename') onRename?.call();
                 if (val == 'delete') onDelete?.call();

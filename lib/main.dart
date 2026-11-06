@@ -8,6 +8,7 @@ import 'package:finderly/providers/file_provider.dart';
 import 'package:finderly/providers/search_provider.dart';
 import 'package:finderly/database/local_db.dart';
 import 'package:finderly/services/sync_service.dart';
+import 'package:finderly/services/google_drive_service.dart';
 import 'package:finderly/app.dart';
 
 void main() async {
@@ -32,6 +33,15 @@ void main() async {
     });
   } catch (e) {
     debugPrint('Sync service startup warning: $e');
+  }
+
+  // Initialize Google Drive sync
+  try {
+    GoogleDriveService.instance.initialize().catchError((e) {
+      debugPrint('Google Drive initialization warning: $e');
+    });
+  } catch (e) {
+    debugPrint('Google Drive startup warning: $e');
   }
 
   runApp(

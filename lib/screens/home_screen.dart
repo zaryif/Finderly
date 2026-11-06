@@ -10,6 +10,7 @@ import 'package:finderly/widgets/color_picker_dialog.dart';
 import 'package:finderly/screens/folder_screen.dart';
 import 'package:finderly/screens/search_screen.dart';
 import 'package:finderly/widgets/sync_sheet.dart';
+import 'package:finderly/widgets/merge_folder_dialog.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,15 +33,27 @@ class _HomeScreenState extends State<HomeScreen> {
     return Consumer<FolderProvider>(
       builder: (context, folderProvider, _) {
         return Scaffold(
+          extendBodyBehindAppBar: true,
+          backgroundColor: Colors.black,
           appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
             title: Row(
               children: [
-                Image.asset('assets/icons/app_icon.png', width: 28, height: 28),
+                Image.asset('assets/icons/logo_icon.png', width: 28, height: 28),
                 const SizedBox(width: 10),
-                const Text('Finderly', style: TextStyle(fontWeight: FontWeight.w600)),
+                const Text('Finderly', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
               ],
             ),
             actions: [
+              // + button at the top
+              IconButton(
+                icon: const Icon(Icons.add, size: 26),
+                tooltip: 'New Folder',
+                onPressed: () => _showCreateFolderDialog(context, folderProvider),
+              ),
               // Multi-device sync indicator & Sync Center trigger
               ListenableBuilder(
                 listenable: SyncService.instance,
@@ -100,14 +113,23 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          body: _FolderGrid(
-            folderProvider: folderProvider,
-            onRefresh: () => folderProvider.loadFolders(null),
-          ),
-          floatingActionButton: FloatingActionButton.extended(
-            onPressed: () => _showCreateFolderDialog(context, folderProvider),
-            icon: const Icon(Icons.create_new_folder),
-            label: const Text('New Folder'),
+          body: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              color: Colors.black,
+              image: DecorationImage(
+                image: AssetImage('assets/images/background.jpg'),
+                fit: BoxFit.cover,
+                repeat: ImageRepeat.repeat,
+              ),
+            ),
+            child: SafeArea(
+              child: _FolderGrid(
+                folderProvider: folderProvider,
+                onRefresh: () => folderProvider.loadFolders(null),
+              ),
+            ),
           ),
         );
       },
@@ -254,6 +276,7 @@ class _FolderGrid extends StatelessWidget {
               },
               onRename: () => _renameFolder(context, folder),
               onChangeColor: () => _changeColor(context, folder),
+              onMerge: () => _mergeFolder(context, folder),
               onDelete: () => _deleteFolder(context, folder),
             );
           },
@@ -298,6 +321,22 @@ class _FolderGrid extends StatelessWidget {
     if (color != null) {
       await folderProvider.changeFolderColor(folder.id, color);
       onRefresh();
+    }
+  }
+
+  Future<void> _mergeFolder(BuildContext context, FolderModel folder) async {
+    final target = await MergeFolderDialog.show(context, folder);
+    if (target != null && context.mounted) {
+      await folderProvider.mergeFolders(folder.id, target.id, refreshParentId: null);
+      onRefresh();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Merged "${folder.name}" into "${target.name}"'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

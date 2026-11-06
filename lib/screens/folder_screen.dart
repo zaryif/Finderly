@@ -8,6 +8,7 @@ import 'package:finderly/widgets/folder_card.dart';
 import 'package:finderly/widgets/folder_icon.dart';
 import 'package:finderly/widgets/file_tile.dart';
 import 'package:finderly/widgets/color_picker_dialog.dart';
+import 'package:finderly/widgets/merge_folder_dialog.dart';
 import 'package:finderly/theme/folder_colors.dart';
 
 class FolderScreen extends StatefulWidget {
@@ -39,7 +40,13 @@ class _FolderScreenState extends State<FolderScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      backgroundColor: Colors.black,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -52,11 +59,17 @@ class _FolderScreenState extends State<FolderScreen> {
               child: Text(
                 _currentFolder.name,
                 overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add, size: 26),
+            tooltip: 'Add',
+            onPressed: () => _showAddOptions(context),
+          ),
           IconButton(
             icon: const Icon(Icons.refresh),
             tooltip: 'Refresh',
@@ -67,6 +80,7 @@ class _FolderScreenState extends State<FolderScreen> {
             itemBuilder: (_) => [
               const PopupMenuItem(value: 'rename', child: Text('Rename folder')),
               const PopupMenuItem(value: 'color', child: Text('Change color')),
+              const PopupMenuItem(value: 'merge', child: Text('Merge folder into...')),
               const PopupMenuItem(
                 value: 'delete',
                 child: Text('Delete folder', style: TextStyle(color: Colors.red)),
@@ -75,27 +89,143 @@ class _FolderScreenState extends State<FolderScreen> {
           ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SubfoldersSection(
-            parentId: _currentFolder.id,
-            onSubfolderPopped: _refresh,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.black,
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.jpg'),
+            fit: BoxFit.cover,
+            repeat: ImageRepeat.repeat,
           ),
-          const Divider(height: 1),
-          Expanded(
-            child: _FilesSection(
-              folderId: _currentFolder.id,
-              onFileRenamed: (file) => _renameFileDialog(context, file),
-            ),
+        ),
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _SubfoldersSection(
+                parentId: _currentFolder.id,
+                onSubfolderPopped: _refresh,
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: _FilesSection(
+                  folderId: _currentFolder.id,
+                  onFileRenamed: (file) => _renameFileDialog(context, file),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: _AddFab(
-        folderId: _currentFolder.id,
-        onSubfolderCreated: _refresh,
+        ),
       ),
     );
+  }
+
+  void _showAddOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.upload_file, color: Colors.blue),
+              title: const Text('Import Files'),
+              subtitle: const Text('Select one or more files (PDF, images, etc.)'),
+              onTap: () {
+                Navigator.pop(context);
+                context.read<FileProvider>().importFiles(_currentFolder.id);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.create_new_folder, color: Colors.amber),
+              title: const Text('New Subfolder'),
+              subtitle: const Text('Create a colored nested folder'),
+              onTap: () {
+                Navigator.pop(context);
+                _createSubfolder(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createSubfolder(BuildContext context) async {
+    final controller = TextEditingController();
+    var selectedColor = FolderColor.blue;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setState) => AlertDialog(
+          title: const Text('New Subfolder'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Folder name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Text('Color: '),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () async {
+                      final color = await ColorPickerDialog.show(
+                        ctx,
+                        current: selectedColor,
+                      );
+                      if (color != null) setState(() => selectedColor = color);
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: selectedColor.primary,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Create'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (result == true && controller.text.trim().isNotEmpty && mounted) {
+      await context.read<FolderProvider>().createFolder(
+            controller.text.trim(),
+            selectedColor,
+            _currentFolder.id,
+          );
+      _refresh();
+    }
+    controller.dispose();
   }
 
   Future<void> _handleMenuAction(String action) async {
@@ -139,6 +269,24 @@ class _FolderScreenState extends State<FolderScreen> {
           setState(() {
             _currentFolder = _currentFolder.copyWith(color: color);
           });
+        }
+      case 'merge':
+        final target = await MergeFolderDialog.show(context, _currentFolder);
+        if (target != null && mounted) {
+          await folderProvider.mergeFolders(
+            _currentFolder.id,
+            target.id,
+            refreshParentId: _currentFolder.parentId,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Merged "${_currentFolder.name}" into "${target.name}"'),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+            Navigator.pop(context);
+          }
         }
       case 'delete':
         final confirm = await showDialog<bool>(
@@ -255,6 +403,7 @@ class _SubfoldersSection extends StatelessWidget {
                       },
                       onRename: () => _renameSubfolder(context, folder),
                       onChangeColor: () => _changeSubfolderColor(context, folder),
+                      onMerge: () => _mergeSubfolder(context, folder),
                       onDelete: () => _deleteSubfolder(context, folder),
                     ),
                   );
@@ -295,6 +444,26 @@ class _SubfoldersSection extends StatelessWidget {
     if (color != null && context.mounted) {
       await context.read<FolderProvider>().changeFolderColor(folder.id, color);
       onSubfolderPopped();
+    }
+  }
+
+  Future<void> _mergeSubfolder(BuildContext context, FolderModel folder) async {
+    final target = await MergeFolderDialog.show(context, folder);
+    if (target != null && context.mounted) {
+      await context.read<FolderProvider>().mergeFolders(
+        folder.id,
+        target.id,
+        refreshParentId: parentId,
+      );
+      onSubfolderPopped();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Merged "${folder.name}" into "${target.name}"'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 
@@ -365,129 +534,5 @@ class _FilesSection extends StatelessWidget {
         );
       },
     );
-  }
-}
-
-class _AddFab extends StatelessWidget {
-  final String folderId;
-  final VoidCallback onSubfolderCreated;
-
-  const _AddFab({
-    required this.folderId,
-    required this.onSubfolderCreated,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FloatingActionButton.extended(
-      onPressed: () => _showAddOptions(context),
-      icon: const Icon(Icons.add),
-      label: const Text('Add'),
-    );
-  }
-
-  void _showAddOptions(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (_) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.upload_file, color: Colors.blue),
-              title: const Text('Import Files'),
-              subtitle: const Text('Select one or more files (PDF, images, etc.)'),
-              onTap: () {
-                Navigator.pop(context);
-                context.read<FileProvider>().importFiles(folderId);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.create_new_folder, color: Colors.amber),
-              title: const Text('New Subfolder'),
-              subtitle: const Text('Create a colored nested folder'),
-              onTap: () {
-                Navigator.pop(context);
-                _createSubfolder(context);
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _createSubfolder(BuildContext context) async {
-    final controller = TextEditingController();
-    var selectedColor = FolderColor.blue;
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setState) => AlertDialog(
-          title: const Text('New Subfolder'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Folder name',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Text('Color: '),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () async {
-                      final color = await ColorPickerDialog.show(
-                        ctx,
-                        current: selectedColor,
-                      );
-                      if (color != null) setState(() => selectedColor = color);
-                    },
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: selectedColor.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child: const Text('Create'),
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (result == true && controller.text.trim().isNotEmpty && context.mounted) {
-      await context.read<FolderProvider>().createFolder(
-            controller.text.trim(),
-            selectedColor,
-            folderId,
-          );
-      onSubfolderCreated();
-    }
-    controller.dispose();
   }
 }

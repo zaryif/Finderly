@@ -5,8 +5,8 @@ import 'package:finderly/theme/folder_colors.dart';
 
 void main() {
   group('FolderColor', () {
-    test('all 8 colors have labels and match fromName', () {
-      expect(FolderColor.values.length, 8);
+    test('all 18 colors have labels and match fromName', () {
+      expect(FolderColor.values.length, 18);
       for (final color in FolderColor.values) {
         expect(FolderColor.fromName(color.name), color);
         expect(color.label.isNotEmpty, true);

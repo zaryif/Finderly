@@ -143,6 +143,68 @@ class LocalDB {
     return maps.map(FolderModel.fromMap).toList();
   }
 
+  /// Get candidate target folders for merge, excluding the source folder and all its descendants
+  Future<List<FolderModel>> getMergeCandidates(String sourceFolderId) async {
+    final db = await database;
+    final excludedIds = <String>{sourceFolderId};
+    final queue = <String>[sourceFolderId];
+
+    while (queue.isNotEmpty) {
+      final cur = queue.removeAt(0);
+      final children = await db.query(
+        'folders',
+        columns: ['id'],
+        where: 'parentId = ?',
+        whereArgs: [cur],
+      );
+      for (final c in children) {
+        final cid = c['id'] as String;
+        excludedIds.add(cid);
+        queue.add(cid);
+      }
+    }
+
+    final all = await getAllFolders();
+    return all.where((f) => !excludedIds.contains(f.id)).toList();
+  }
+
+  /// Merges all files and subfolders from sourceFolderId into targetFolderId, then removes sourceFolderId
+  Future<void> mergeFolders(String sourceFolderId, String targetFolderId) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      // 1. Move all files from source to target
+      await txn.update(
+        'files',
+        {'folderId': targetFolderId},
+        where: 'folderId = ?',
+        whereArgs: [sourceFolderId],
+      );
+
+      // 2. Move direct subfolders from source to target
+      await txn.update(
+        'folders',
+        {'parentId': targetFolderId},
+        where: 'parentId = ?',
+        whereArgs: [sourceFolderId],
+      );
+
+      // 3. Delete the source folder record
+      await txn.delete(
+        'folders',
+        where: 'id = ?',
+        whereArgs: [sourceFolderId],
+      );
+
+      // 4. Update timestamp of target folder
+      await txn.update(
+        'folders',
+        {'updatedAt': DateTime.now().toIso8601String()},
+        where: 'id = ?',
+        whereArgs: [targetFolderId],
+      );
+    });
+  }
+
   // --- Files ---
 
   Future<void> insertFile(FileItemModel file) async {

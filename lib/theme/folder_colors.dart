@@ -8,7 +8,17 @@ enum FolderColor {
   orange(Color(0xFFF39C12), Color(0xFFD4850F), Color(0xFFF5B041)),
   yellow(Color(0xFFF1C40F), Color(0xFFD4AC0D), Color(0xFFF4D03F)),
   green(Color(0xFF2ECC71), Color(0xFF27AE60), Color(0xFF58D68D)),
-  gray(Color(0xFF95A5A6), Color(0xFF7F8C8D), Color(0xFFAEB6B7));
+  gray(Color(0xFF95A5A6), Color(0xFF7F8C8D), Color(0xFFAEB6B7)),
+  teal(Color(0xFF00B4D8), Color(0xFF0077B6), Color(0xFF90E0EF)),
+  cyan(Color(0xFF00C4DF), Color(0xFF0096B4), Color(0xFF7CE8F7)),
+  indigo(Color(0xFF5C6BC0), Color(0xFF3949AB), Color(0xFF7986CB)),
+  lavender(Color(0xFF9F8FEF), Color(0xFF7A64D8), Color(0xFFC7B9FF)),
+  mint(Color(0xFF2DD4BF), Color(0xFF0D9488), Color(0xFF5EEAD4)),
+  coral(Color(0xFFFF7043), Color(0xFFF4511E), Color(0xFFFF8A65)),
+  amber(Color(0xFFFFB300), Color(0xFFFF8F00), Color(0xFFFFCA28)),
+  brown(Color(0xFF8D6E63), Color(0xFF6D4C41), Color(0xFFA1887F)),
+  slate(Color(0xFF78909C), Color(0xFF546E7A), Color(0xFF90A4AE)),
+  rose(Color(0xFFF43F5E), Color(0xFFE11D48), Color(0xFFFB7185));
 
   const FolderColor(this.primary, this.shadow, this.highlight);
 
