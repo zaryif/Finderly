@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:finderly/providers/folder_provider.dart';
 import 'package:finderly/providers/file_provider.dart';
 import 'package:finderly/providers/search_provider.dart';
+import 'package:finderly/providers/background_provider.dart';
 import 'package:finderly/database/local_db.dart';
 import 'package:finderly/services/sync_service.dart';
 import 'package:finderly/services/google_drive_service.dart';
@@ -50,6 +50,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => FolderProvider()),
         ChangeNotifierProvider(create: (_) => FileProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProvider(create: (_) => BackgroundProvider()),
       ],
       child: const FinderlyApp(),
     ),

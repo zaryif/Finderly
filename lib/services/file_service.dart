@@ -62,6 +62,41 @@ class FileService {
     return newPath;
   }
 
+  /// Physically move file to new folder directory on disk, ensuring safe rename and collision handling
+  Future<String> moveFileOnDisk(String currentPath, String newFolderId) async {
+    final currentFile = File(currentPath);
+    if (!await currentFile.exists()) return currentPath;
+
+    final appDir = await getAppStorageDir();
+    final targetDir = Directory(p.join(appDir, newFolderId));
+    if (!await targetDir.exists()) {
+      await targetDir.create(recursive: true);
+    }
+
+    final originalName = p.basename(currentPath);
+    var newDest = p.join(targetDir.path, originalName);
+
+    // If destination already exists with same name, generate unique name
+    if (await File(newDest).exists() && newDest != currentPath) {
+      final base = p.basenameWithoutExtension(originalName);
+      final ext = p.extension(originalName);
+      int counter = 1;
+      while (await File(p.join(targetDir.path, '$base ($counter)$ext')).exists()) {
+        counter++;
+      }
+      newDest = p.join(targetDir.path, '$base ($counter)$ext');
+    }
+
+    try {
+      await currentFile.rename(newDest);
+    } catch (_) {
+      // Fallback for cross-filesystem moves
+      await currentFile.copy(newDest);
+      await currentFile.delete();
+    }
+    return newDest;
+  }
+
   Future<void> deleteFileFromDisk(String path) async {
     final file = File(path);
     if (await file.exists()) {

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:finderly/models/folder_model.dart';
 import 'package:finderly/models/file_item_model.dart';
 import 'package:finderly/theme/folder_colors.dart';
+import 'package:finderly/providers/background_provider.dart';
 
 void main() {
   group('FolderColor', () {
@@ -12,6 +13,23 @@ void main() {
         expect(color.label.isNotEmpty, true);
       }
       expect(FolderColor.fromName('unknown'), FolderColor.blue);
+    });
+  });
+
+  group('AppBackground', () {
+    test('all 5 backgrounds have valid labels and contrast colors', () {
+      expect(AppBackground.values.length, 5);
+      for (final bg in AppBackground.values) {
+        expect(bg.label.isNotEmpty, true);
+        expect(bg.textColor, isNotNull);
+        expect(bg.iconColor, isNotNull);
+        expect(bg.decoration, isNotNull);
+      }
+      expect(AppBackground.darkDots.isDark, true);
+      expect(AppBackground.lightDots.isDark, false);
+      expect(AppBackground.gray.isDark, false);
+      expect(AppBackground.white.isDark, false);
+      expect(AppBackground.pureBlack.isDark, true);
     });
   });
 

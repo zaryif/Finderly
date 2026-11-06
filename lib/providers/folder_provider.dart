@@ -36,7 +36,7 @@ class FolderProvider extends ChangeNotifier {
   }
 
   Future<void> createFolder(
-      String name, FolderColor color, String? parentId) async {
+      String name, FolderColor color, [String? parentId]) async {
     final now = DateTime.now();
     final folder = FolderModel(
       id: _uuid.v4(),
@@ -93,12 +93,51 @@ class FolderProvider extends ChangeNotifier {
     return _db.getMergeCandidates(sourceFolderId);
   }
 
+  Future<List<FolderModel>> getMoveCandidates({List<String> excludeFolderIds = const []}) async {
+    return _db.getMoveCandidates(excludeFolderIds: excludeFolderIds);
+  }
+
+  Future<void> moveFolders(
+    List<String> folderIds,
+    String? targetParentId, {
+    String? refreshParentId,
+  }) async {
+    await _db.moveFolders(folderIds, targetParentId);
+    SyncService.instance.markPending();
+    await loadFolders(refreshParentId);
+  }
+
   Future<void> mergeFolders(
     String sourceFolderId,
     String targetFolderId, {
     String? refreshParentId,
   }) async {
+    // 1. Physically move all source files to target folder on disk and update records
+    final sourceFiles = await _db.getFilesByFolder(sourceFolderId);
+    for (final file in sourceFiles) {
+      final newPath = await _fileService.moveFileOnDisk(file.localPath, targetFolderId);
+      final newName = p.basename(newPath);
+      await _db.updateFile(file.copyWith(
+        folderId: targetFolderId,
+        localPath: newPath,
+        name: newName,
+      ));
+    }
+
+    // 2. Perform database merge for subfolders and clean source folder record
     await _db.mergeFolders(sourceFolderId, targetFolderId);
+
+    // 3. Clean up source folder directory on disk if empty
+    try {
+      final appDir = await _fileService.getAppStorageDir();
+      final sourceDir = Directory(p.join(appDir, sourceFolderId));
+      if (await sourceDir.exists()) {
+        await sourceDir.delete(recursive: true);
+      }
+    } catch (e) {
+      debugPrint('Source folder disk cleanup notice: $e');
+    }
+
     SyncService.instance.markPending();
     await loadFolders(refreshParentId);
   }

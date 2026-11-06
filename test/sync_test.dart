@@ -1,10 +1,8 @@
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:finderly/services/sync_service.dart';
 import 'package:finderly/models/folder_model.dart';
-import 'package:finderly/models/file_item_model.dart';
 import 'package:finderly/theme/folder_colors.dart';
 
 void main() {

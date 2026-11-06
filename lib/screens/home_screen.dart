@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:finderly/models/folder_model.dart';
 import 'package:finderly/providers/folder_provider.dart';
+import 'package:finderly/providers/background_provider.dart';
 import 'package:finderly/services/sync_service.dart';
 import 'package:finderly/theme/folder_colors.dart';
 import 'package:finderly/widgets/folder_card.dart';
 import 'package:finderly/widgets/folder_icon.dart';
 import 'package:finderly/widgets/color_picker_dialog.dart';
+import 'package:finderly/widgets/move_destination_dialog.dart';
 import 'package:finderly/screens/folder_screen.dart';
 import 'package:finderly/screens/search_screen.dart';
 import 'package:finderly/widgets/sync_sheet.dart';
@@ -30,27 +32,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<FolderProvider>(
-      builder: (context, folderProvider, _) {
+    return Consumer2<FolderProvider, BackgroundProvider>(
+      builder: (context, folderProvider, bgProvider, _) {
+        final currentBg = bgProvider.current;
+        final iconColor = currentBg.iconColor;
+        final textColor = currentBg.textColor;
+
         return Scaffold(
           extendBodyBehindAppBar: true,
-          backgroundColor: Colors.black,
+          backgroundColor: currentBg.solidColor,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
+            iconTheme: IconThemeData(color: iconColor),
             title: Row(
               children: [
                 Image.asset('assets/icons/logo_icon.png', width: 28, height: 28),
                 const SizedBox(width: 10),
-                const Text('Finderly', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20)),
+                Text(
+                  'Finderly',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 20,
+                    color: textColor,
+                  ),
+                ),
               ],
             ),
             actions: [
               // + button at the top
               IconButton(
-                icon: const Icon(Icons.add, size: 26),
+                icon: Icon(Icons.add, size: 26, color: iconColor),
                 tooltip: 'New Folder',
                 onPressed: () => _showCreateFolderDialog(context, folderProvider),
               ),
@@ -78,7 +92,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     : Icons.cloud_outlined,
                                 color: peerCount > 0
                                     ? Theme.of(context).colorScheme.primary
-                                    : null,
+                                    : iconColor,
                               ),
                         tooltip: 'Finderly Sync Center (${sync.localIp ?? 'Active'})',
                         onPressed: () => SyncSheet.show(context),
@@ -104,7 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.search),
+                icon: Icon(Icons.search, color: iconColor),
                 tooltip: 'Search folders and files',
                 onPressed: () => Navigator.push(
                   context,
@@ -116,14 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: const BoxDecoration(
-              color: Colors.black,
-              image: DecorationImage(
-                image: AssetImage('assets/images/background.jpg'),
-                fit: BoxFit.cover,
-                repeat: ImageRepeat.repeat,
-              ),
-            ),
+            decoration: currentBg.decoration,
             child: SafeArea(
               child: _FolderGrid(
                 folderProvider: folderProvider,
@@ -174,7 +181,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ctx,
                         current: selectedColor,
                       );
-                      if (color != null) setState(() => selectedColor = color);
+                      if (color != null) {
+                        setState(() => selectedColor = color);
+                      }
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
@@ -183,7 +192,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       decoration: BoxDecoration(
                         color: selectedColor.primary,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black12, width: 2),
                       ),
                     ),
                   ),
@@ -205,12 +213,8 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
 
-    if (result == true && nameController.text.trim().isNotEmpty) {
-      await provider.createFolder(
-        nameController.text.trim(),
-        selectedColor,
-        null,
-      );
+    if (result == true && nameController.text.trim().isNotEmpty && mounted) {
+      await provider.createFolder(nameController.text.trim(), selectedColor);
     }
     nameController.dispose();
   }
@@ -227,6 +231,10 @@ class _FolderGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (folderProvider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     final folders = folderProvider.folders;
 
     if (folders.isEmpty) {
@@ -242,7 +250,7 @@ class _FolderGrid extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             const Text(
-              'Tap "+ New Folder" below to organize your files',
+              'Tap + at top right to create your first folder',
               style: TextStyle(color: Colors.grey, fontSize: 13),
             ),
           ],
@@ -276,6 +284,7 @@ class _FolderGrid extends StatelessWidget {
               },
               onRename: () => _renameFolder(context, folder),
               onChangeColor: () => _changeColor(context, folder),
+              onMove: () => _moveFolder(context, folder),
               onMerge: () => _mergeFolder(context, folder),
               onDelete: () => _deleteFolder(context, folder),
             );
@@ -321,6 +330,29 @@ class _FolderGrid extends StatelessWidget {
     if (color != null) {
       await folderProvider.changeFolderColor(folder.id, color);
       onRefresh();
+    }
+  }
+
+  Future<void> _moveFolder(BuildContext context, FolderModel folder) async {
+    final res = await MoveDestinationDialog.show(
+      context,
+      excludeFolderIds: [folder.id],
+      title: 'Move "${folder.name}" to...',
+      allowRoot: true,
+    );
+    if (res != null && context.mounted) {
+      final targetParentId = res.isRoot ? null : res.targetFolder?.id;
+      await folderProvider.moveFolders([folder.id], targetParentId, refreshParentId: null);
+      onRefresh();
+      if (context.mounted) {
+        final destName = res.isRoot ? 'Finderly Home' : res.targetFolder?.name;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Moved "${folder.name}" to $destName'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     }
   }
 

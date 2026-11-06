@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:finderly/services/sync_service.dart';
 import 'package:finderly/services/google_drive_service.dart';
 import 'package:finderly/providers/folder_provider.dart';
+import 'package:finderly/providers/background_provider.dart';
 
 class SyncSheet extends StatefulWidget {
   const SyncSheet({super.key});
@@ -272,15 +273,21 @@ class _SyncSheetState extends State<SyncSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final sheetBg = isDark ? const Color(0xFF161618) : Colors.white;
+    final sheetBorder = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08);
+    final titleColor = isDark ? Colors.white : const Color(0xFF1D1D1F);
+    final cardBg = isDark ? Colors.white.withOpacity(0.04) : Colors.black.withOpacity(0.03);
+    final cardBorder = isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.08);
 
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF161618),
+        color: sheetBg,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: sheetBorder),
       ),
       child: ListenableBuilder(
         listenable: SyncService.instance,
@@ -317,7 +324,7 @@ class _SyncSheetState extends State<SyncSheet> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Icon(
-                        Icons.sync_rounded,
+                        Icons.settings_rounded,
                         color: theme.colorScheme.primary,
                         size: 22,
                       ),
@@ -327,21 +334,21 @@ class _SyncSheetState extends State<SyncSheet> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            'Finderly Sync & Settings',
+                          Text(
+                            'Finderly Settings & Sync',
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: titleColor,
                             ),
                           ),
                           Text(
-                            sync.syncMessage ?? 'Multi-device & Google Drive sync',
+                            sync.syncMessage ?? 'Wallpapers, Google Drive & Multi-device',
                             style: TextStyle(
                               fontSize: 12,
                               color: isSyncing
                                   ? theme.colorScheme.primary
-                                  : Colors.grey.shade400,
+                                  : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -363,25 +370,30 @@ class _SyncSheetState extends State<SyncSheet> {
                   backgroundColor: theme.colorScheme.primary.withOpacity(0.1),
                 ),
 
-              Divider(height: 1, color: Colors.white.withOpacity(0.08)),
+              Divider(height: 1, color: sheetBorder),
 
               // Scrollable content
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
                   children: [
-                    // --- SECTION 1: Google Account & Drive Sync ---
+                    // --- SECTION 1: Wallpaper & Appearance ---
+                    _buildAppearanceCard(context, isDark, cardBg, cardBorder, titleColor),
+
+                    const SizedBox(height: 16),
+
+                    // --- SECTION 2: Google Account & Drive Sync ---
                     _buildGoogleDriveCard(context),
 
                     const SizedBox(height: 16),
 
-                    // --- SECTION 2: This Device Status Card ---
+                    // --- SECTION 3: This Device Status Card ---
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.04),
+                        color: cardBg,
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: Colors.white.withOpacity(0.08)),
+                        border: Border.all(color: cardBorder),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -402,10 +414,10 @@ class _SyncSheetState extends State<SyncSheet> {
                               Expanded(
                                 child: Text(
                                   'This Device: ${sync.deviceName}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 13,
-                                    color: Colors.white,
+                                    color: titleColor,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -454,16 +466,16 @@ class _SyncSheetState extends State<SyncSheet> {
 
                     const SizedBox(height: 18),
 
-                    // --- SECTION 3: Nearby Wi-Fi Devices ---
+                    // --- SECTION 4: Nearby Wi-Fi Devices ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
+                        Text(
                           'Nearby Devices (Wi-Fi)',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: titleColor,
                           ),
                         ),
                         TextButton.icon(
@@ -484,9 +496,9 @@ class _SyncSheetState extends State<SyncSheet> {
                       Container(
                         padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 14),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.02),
+                          color: cardBg,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white.withOpacity(0.06)),
+                          border: Border.all(color: cardBorder),
                         ),
                         child: Column(
                           children: [
@@ -779,6 +791,140 @@ class _SyncSheetState extends State<SyncSheet> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildAppearanceCard(
+    BuildContext context,
+    bool isDark,
+    Color cardBg,
+    Color cardBorder,
+    Color titleColor,
+  ) {
+    final bgProvider = context.watch<BackgroundProvider>();
+    final current = bgProvider.current;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: cardBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: Colors.indigo.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.wallpaper_rounded, color: Colors.indigoAccent, size: 18),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Wallpaper & Theme',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: titleColor),
+                    ),
+                    Text(
+                      'Select dot matrix wallpapers or solid styles',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: isDark ? Colors.grey.shade400 : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: AppBackground.values.map((bg) {
+                final isSelected = current == bg;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: () => bgProvider.setBackground(bg),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      width: 88,
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.blue.withOpacity(0.15)
+                            : (isDark ? Colors.white.withOpacity(0.03) : Colors.black.withOpacity(0.03)),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? Colors.blue : cardBorder,
+                          width: isSelected ? 2 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            height: 48,
+                            width: double.infinity,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(6),
+                              color: bg.solidColor,
+                              image: bg.assetName != null
+                                  ? DecorationImage(
+                                      image: AssetImage('assets/images/${bg.assetName}'),
+                                      fit: BoxFit.cover,
+                                    )
+                                  : null,
+                              border: Border.all(
+                                color: isDark ? Colors.white.withOpacity(0.15) : Colors.black.withOpacity(0.15),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: isSelected
+                                ? Center(
+                                    child: Container(
+                                      decoration: const BoxDecoration(
+                                        color: Colors.blue,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      padding: const EdgeInsets.all(2),
+                                      child: const Icon(Icons.check, size: 14, color: Colors.white),
+                                    ),
+                                  )
+                                : null,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            bg.label,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                              color: isSelected ? Colors.blue : titleColor,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

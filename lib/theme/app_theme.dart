@@ -38,5 +38,36 @@ class AppTheme {
     useMaterial3: true,
   );
 
-  static final light = dark; // Enforce sleek dark dotted matrix style as requested
+  static final light = ThemeData(
+    brightness: Brightness.light,
+    scaffoldBackgroundColor: const Color(0xFFF2F2F7),
+    colorScheme: const ColorScheme.light(
+      surface: Colors.white,
+      onSurface: Color(0xFF1D1D1F),
+      primary: Color(0xFF007AFF),
+      secondary: Color(0xFF5856D6),
+    ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: IconThemeData(color: Color(0xFF1D1D1F)),
+      titleTextStyle: TextStyle(
+        color: Color(0xFF1D1D1F),
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+      ),
+    ),
+    cardTheme: const CardThemeData(
+      shape: _cardShape,
+      color: Colors.white,
+      elevation: 0,
+    ),
+    dividerTheme: DividerThemeData(
+      color: Colors.black.withOpacity(0.08),
+      thickness: 1,
+    ),
+    useMaterial3: true,
+  );
 }

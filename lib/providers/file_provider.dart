@@ -1,5 +1,6 @@
 import 'dart:collection';
 import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 import 'package:finderly/database/local_db.dart';
 import 'package:finderly/models/file_item_model.dart';
 import 'package:finderly/services/file_service.dart';
@@ -53,6 +54,24 @@ class FileProvider extends ChangeNotifier {
     await _db.deleteFile(id);
     SyncService.instance.markPending();
     await loadFiles(file.folderId);
+  }
+
+  Future<void> moveFiles(List<String> fileIds, String targetFolderId, {String? currentFolderId}) async {
+    for (final id in fileIds) {
+      final file = await _db.getFileById(id);
+      if (file == null) continue;
+      final newPath = await _fileService.moveFileOnDisk(file.localPath, targetFolderId);
+      final newName = p.basename(newPath);
+      await _db.updateFile(file.copyWith(
+        folderId: targetFolderId,
+        localPath: newPath,
+        name: newName,
+      ));
+    }
+    SyncService.instance.markPending();
+    if (currentFolderId != null) {
+      await loadFiles(currentFolderId);
+    }
   }
 
   Future<void> toggleDownload(String id) async {

@@ -2,14 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
-import 'package:path/path.dart' as p;
 import 'package:url_launcher/url_launcher.dart';
 import 'package:finderly/database/local_db.dart';
-import 'package:finderly/models/folder_model.dart';
-import 'package:finderly/models/file_item_model.dart';
-import 'package:finderly/services/file_service.dart';
 
 class GoogleUserProfile {
   final String email;
@@ -303,7 +300,6 @@ class GoogleDriveService extends ChangeNotifier {
     final client = HttpClient();
     int foldersSynced = 0;
     int filesUploaded = 0;
-    int filesDownloaded = 0;
 
     try {
       final driveFolderId = await _getOrCreateFinderlyFolder(client);
@@ -335,7 +331,6 @@ class GoogleDriveService extends ChangeNotifier {
       foldersSynced = folders.length;
 
       // 2. Upload local physical files to Google Drive
-      final appStorageDir = await FileService().getAppStorageDir();
       int count = 0;
       for (final f in files) {
         count++;

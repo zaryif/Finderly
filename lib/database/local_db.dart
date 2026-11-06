@@ -205,6 +205,79 @@ class LocalDB {
     });
   }
 
+  /// Move multiple files into targetFolderId
+  Future<void> moveFiles(List<String> fileIds, String targetFolderId) async {
+    if (fileIds.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      final now = DateTime.now().toIso8601String();
+      for (final id in fileIds) {
+        await txn.update(
+          'files',
+          {'folderId': targetFolderId},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+      await txn.update(
+        'folders',
+        {'updatedAt': now},
+        where: 'id = ?',
+        whereArgs: [targetFolderId],
+      );
+    });
+  }
+
+  /// Move multiple folders into targetParentId (null means root/home)
+  Future<void> moveFolders(List<String> folderIds, String? targetParentId) async {
+    if (folderIds.isEmpty) return;
+    final db = await database;
+    await db.transaction((txn) async {
+      final now = DateTime.now().toIso8601String();
+      for (final id in folderIds) {
+        await txn.update(
+          'folders',
+          {'parentId': targetParentId, 'updatedAt': now},
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+      if (targetParentId != null) {
+        await txn.update(
+          'folders',
+          {'updatedAt': now},
+          where: 'id = ?',
+          whereArgs: [targetParentId],
+        );
+      }
+    });
+  }
+
+  /// Get candidate destination folders for moving, excluding the given folderIds and all their descendants
+  Future<List<FolderModel>> getMoveCandidates({List<String> excludeFolderIds = const []}) async {
+    final db = await database;
+    final excluded = <String>{...excludeFolderIds};
+    final queue = <String>[...excludeFolderIds];
+
+    while (queue.isNotEmpty) {
+      final cur = queue.removeAt(0);
+      final children = await db.query(
+        'folders',
+        columns: ['id'],
+        where: 'parentId = ?',
+        whereArgs: [cur],
+      );
+      for (final c in children) {
+        final cid = c['id'] as String;
+        excluded.add(cid);
+        queue.add(cid);
+      }
+    }
+
+    final all = await getAllFolders();
+    return all.where((f) => !excluded.contains(f.id)).toList();
+  }
+
   // --- Files ---
 
   Future<void> insertFile(FileItemModel file) async {
