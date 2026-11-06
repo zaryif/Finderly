@@ -19,14 +19,25 @@ class FolderModel {
     this.isDownloaded = false,
   });
 
+  static DateTime _parseDateTime(dynamic val) {
+    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+    if (val is String) {
+      final parsed = DateTime.tryParse(val);
+      if (parsed != null) return parsed;
+      final asInt = int.tryParse(val);
+      if (asInt != null) return DateTime.fromMillisecondsSinceEpoch(asInt);
+    }
+    return DateTime.now();
+  }
+
   factory FolderModel.fromMap(Map<String, dynamic> map) => FolderModel(
         id: map['id'] as String,
         name: map['name'] as String,
         parentId: map['parentId'] as String?,
         color: FolderColor.fromName(map['color'] as String),
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updatedAt'] as int),
-        isDownloaded: (map['isDownloaded'] as int) == 1,
+        createdAt: _parseDateTime(map['createdAt']),
+        updatedAt: _parseDateTime(map['updatedAt']),
+        isDownloaded: (map['isDownloaded'] as int? ?? 0) == 1,
       );
 
   Map<String, dynamic> toMap() => {

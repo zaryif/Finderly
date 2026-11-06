@@ -198,7 +198,7 @@ class LocalDB {
       // 4. Update timestamp of target folder
       await txn.update(
         'folders',
-        {'updatedAt': DateTime.now().toIso8601String()},
+        {'updatedAt': DateTime.now().millisecondsSinceEpoch},
         where: 'id = ?',
         whereArgs: [targetFolderId],
       );
@@ -210,7 +210,7 @@ class LocalDB {
     if (fileIds.isEmpty) return;
     final db = await database;
     await db.transaction((txn) async {
-      final now = DateTime.now().toIso8601String();
+      final now = DateTime.now().millisecondsSinceEpoch;
       for (final id in fileIds) {
         await txn.update(
           'files',
@@ -233,7 +233,7 @@ class LocalDB {
     if (folderIds.isEmpty) return;
     final db = await database;
     await db.transaction((txn) async {
-      final now = DateTime.now().toIso8601String();
+      final now = DateTime.now().millisecondsSinceEpoch;
       for (final id in folderIds) {
         await txn.update(
           'folders',

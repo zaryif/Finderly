@@ -102,7 +102,10 @@ class FolderProvider extends ChangeNotifier {
     String? targetParentId, {
     String? refreshParentId,
   }) async {
-    await _db.moveFolders(folderIds, targetParentId);
+    // Filter out moves where a folder is moved into itself
+    final validIds = folderIds.where((id) => id != targetParentId).toList();
+    if (validIds.isEmpty) return;
+    await _db.moveFolders(validIds, targetParentId);
     SyncService.instance.markPending();
     await loadFolders(refreshParentId);
   }
@@ -112,6 +115,12 @@ class FolderProvider extends ChangeNotifier {
     String targetFolderId, {
     String? refreshParentId,
   }) async {
+    if (sourceFolderId == targetFolderId) return;
+
+    final source = await _db.getFolderById(sourceFolderId);
+    final target = await _db.getFolderById(targetFolderId);
+    if (source == null || target == null) return;
+
     // 1. Physically move all source files to target folder on disk and update records
     final sourceFiles = await _db.getFilesByFolder(sourceFolderId);
     for (final file in sourceFiles) {

@@ -21,6 +21,17 @@ class FileItemModel {
     this.isDownloaded = false,
   });
 
+  static DateTime _parseDateTime(dynamic val) {
+    if (val is int) return DateTime.fromMillisecondsSinceEpoch(val);
+    if (val is String) {
+      final parsed = DateTime.tryParse(val);
+      if (parsed != null) return parsed;
+      final asInt = int.tryParse(val);
+      if (asInt != null) return DateTime.fromMillisecondsSinceEpoch(asInt);
+    }
+    return DateTime.now();
+  }
+
   factory FileItemModel.fromMap(Map<String, dynamic> map) => FileItemModel(
         id: map['id'] as String,
         name: map['name'] as String,
@@ -29,8 +40,8 @@ class FileItemModel {
         cloudUrl: map['cloudUrl'] as String?,
         mimeType: map['mimeType'] as String,
         sizeBytes: map['sizeBytes'] as int,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] as int),
-        isDownloaded: (map['isDownloaded'] as int) == 1,
+        createdAt: _parseDateTime(map['createdAt']),
+        isDownloaded: (map['isDownloaded'] as int? ?? 0) == 1,
       );
 
   Map<String, dynamic> toMap() => {
